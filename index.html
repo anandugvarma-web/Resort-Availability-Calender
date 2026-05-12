@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
 <title>Resort Availability Manager</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -626,8 +627,6 @@ body{
 
 <body>
 
-<!-- LOADER -->
-
 <div id="loader">
 
   <div class="loader-logo">
@@ -643,8 +642,6 @@ body{
   </div>
 
 </div>
-
-<!-- LOGIN -->
 
 <div id="pin-overlay">
 
@@ -675,17 +672,15 @@ body{
 
       <strong>Staff Access</strong><br>
 
-      Admin → PIN<br>
-      Reception → PIN<br>
-      Manager → PIN
+      Admin → 8427<br>
+      Reception → 5183<br>
+      Manager → 2649
 
     </div>
 
   </div>
 
 </div>
-
-<!-- TOPBAR -->
 
 <div class="topbar">
 
@@ -706,8 +701,6 @@ body{
   </div>
 
 </div>
-
-<!-- MAIN -->
 
 <div class="main">
 
@@ -737,8 +730,6 @@ body{
     </div>
 
   </div>
-
-  <!-- SETTINGS -->
 
   <div class="settings-panel" id="settings-panel">
 
@@ -784,8 +775,6 @@ body{
 
   </div>
 
-  <!-- HEADER -->
-
   <div class="cal-header">
 
     <div>
@@ -812,11 +801,7 @@ body{
 
   </div>
 
-  <!-- SUMMARY -->
-
   <div class="summary-row" id="summary-row"></div>
-
-  <!-- CALENDAR -->
 
   <div class="cal-card">
 
@@ -835,8 +820,6 @@ body{
   </div>
 
 </div>
-
-<!-- MODAL -->
 
 <div id="day-modal-wrap">
 
@@ -862,17 +845,17 @@ body{
 
 </div>
 
-<!-- TOAST -->
-
 <div id="toast"></div>
 
 <script>
 
-// STORAGE KEY
-
 const STORAGE_KEY = 'resort_manager_v3';
 
-// STAFF PINS
+const BIN_ID = '6a02a206c0954111d80dec58';
+
+const MASTER_KEY = '$2a$10$yq/2Z.5hgsmkCs1S7MuAsOcY8OW0hGDPdbv/YoulW/JdQo07j/QcG';
+
+const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 const STAFF_PINS = [
 
@@ -893,8 +876,6 @@ const STAFF_PINS = [
 
 ];
 
-// STATE
-
 let appData = null;
 let currentProp = 0;
 let currentDate = new Date();
@@ -906,8 +887,6 @@ const MONTHS = [
 'January','February','March','April','May','June',
 'July','August','September','October','November','December'
 ];
-
-// DEFAULT DATA
 
 function defaultData(){
 
@@ -923,7 +902,7 @@ function defaultData(){
 
         contact:'+91 8943366369',
 
-        website:'www.kaattilhome.com',
+        website:'https://kaattilhomes.com',
 
         rooms:[
 
@@ -957,7 +936,70 @@ function defaultData(){
 
 }
 
-// STORAGE
+/* JSONBIN */
+
+async function cloudSave(){
+
+  try{
+
+    await fetch(API_URL,{
+
+      method:'PUT',
+
+      headers:{
+        'Content-Type':'application/json',
+        'X-Master-Key':MASTER_KEY
+      },
+
+      body:JSON.stringify(appData)
+
+    });
+
+    toast('Cloud synced');
+
+  }catch(err){
+
+    console.log(err);
+
+    toast('Cloud sync failed');
+
+  }
+
+}
+
+async function cloudLoad(){
+
+  try{
+
+    const res = await fetch(API_URL,{
+
+      headers:{
+        'X-Master-Key':MASTER_KEY
+      }
+
+    });
+
+    const data = await res.json();
+
+    if(data.record){
+
+      appData = data.record;
+
+    }else{
+
+      appData = defaultData();
+
+    }
+
+  }catch(err){
+
+    console.log(err);
+
+    appData = defaultData();
+
+  }
+
+}
 
 function saveData(){
 
@@ -966,9 +1008,11 @@ function saveData(){
     JSON.stringify(appData)
   );
 
+  cloudSave();
+
 }
 
-function loadData(){
+function loadLocal(){
 
   const raw = localStorage.getItem(STORAGE_KEY);
 
@@ -976,15 +1020,11 @@ function loadData(){
 
     appData = JSON.parse(raw);
 
-  }else{
-
-    appData = defaultData();
-
   }
 
 }
 
-// LOGIN
+/* LOGIN */
 
 function loginStaff(){
 
@@ -1011,13 +1051,38 @@ function loginStaff(){
   document.getElementById('pin-overlay')
     .style.display='none';
 
+  sessionStorage.setItem(
+    'loggedInStaff',
+    JSON.stringify(staff)
+  );
+
   toast(`Welcome ${staff.name}`);
+
+}
+
+function restoreLogin(){
+
+  const s = sessionStorage.getItem('loggedInStaff');
+
+  if(!s)return;
+
+  const staff = JSON.parse(s);
+
+  activeStaff = staff;
+
+  document.getElementById('active-staff-name')
+    .textContent = staff.name;
+
+  document.getElementById('pin-overlay')
+    .style.display='none';
 
 }
 
 function lockApp(){
 
   activeStaff = null;
+
+  sessionStorage.removeItem('loggedInStaff');
 
   document.getElementById('pin-overlay')
     .style.display='flex';
@@ -1033,8 +1098,6 @@ function lockApp(){
 
 }
 
-// TOAST
-
 function toast(msg){
 
   const t=document.getElementById('toast');
@@ -1048,8 +1111,6 @@ function toast(msg){
   },3000);
 
 }
-
-// PROPERTY TABS
 
 function renderTabs(){
 
@@ -1084,8 +1145,6 @@ function renderTabs(){
   });
 
 }
-
-// SETTINGS
 
 function toggleSettings(){
 
@@ -1224,8 +1283,6 @@ function saveSettings(){
 
 }
 
-// PROPERTY
-
 function addProperty(){
 
   appData.properties.push({
@@ -1254,8 +1311,6 @@ function addProperty(){
 
 }
 
-// EXPORT
-
 function exportData(){
 
   const blob=new Blob(
@@ -1272,8 +1327,6 @@ function exportData(){
   a.click();
 
 }
-
-// IMPORT
 
 function importData(event){
 
@@ -1300,8 +1353,6 @@ function importData(event){
   reader.readAsText(file);
 
 }
-
-// AVAILABILITY
 
 function avKey(y,m,d){
 
@@ -1330,8 +1381,6 @@ function getAvail(prop,y,m,d){
   return prop.availability[k];
 
 }
-
-// ANALYTICS
 
 function calculateAnalytics(prop){
 
@@ -1370,8 +1419,6 @@ function calculateAnalytics(prop){
   };
 
 }
-
-// RENDER
 
 function render(){
 
@@ -1497,8 +1544,6 @@ function render(){
 
 }
 
-// MONTH
-
 function changeMonth(d){
 
   currentDate.setMonth(
@@ -1508,8 +1553,6 @@ function changeMonth(d){
   render();
 
 }
-
-// MODAL
 
 function openModal(y,m,d){
 
@@ -1618,16 +1661,20 @@ function saveDay(){
 
 }
 
-// INIT
-
 async function init(){
 
   const bar=
     document.getElementById('loader-bar');
 
-  bar.style.width='40%';
+  bar.style.width='30%';
 
-  loadData();
+  loadLocal();
+
+  bar.style.width='60%';
+
+  await cloudLoad();
+
+  saveData();
 
   bar.style.width='100%';
 
@@ -1635,6 +1682,8 @@ async function init(){
 
     document.getElementById('loader')
       .classList.add('hide');
+
+    restoreLogin();
 
     renderTabs();
 
