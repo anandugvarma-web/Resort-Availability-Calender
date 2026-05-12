@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resort Availability Manager</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+
+*,*::before,*::after{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+:root{
+  --dark:#0f1a14;
+  --forest:#1a2e1e;
+  --green:#2d6a4f;
+  --mid:#40916c;
+  --light:#e8f5ee;
+  --gold:#c9a84c;
+  --white:#ffffff;
+  --off:#faf8f4;
+  --border:#ddd8cc;
+  --muted:#8a8478;
+  --red:#c62828;
+  --redbg:#ffebee;
+  --amber:#b5630a;
+  --amberbg:#fff3e0;
+  --radius:14px;
+}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--off);
+  color:var(--dark);
+  min-height:100vh;
+}
+
+/* LOADER */
+
+#loader{
+  position:fixed;
+  inset:0;
+  background:var(--forest);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  z-index:999999;
+  transition:.5s;
+}
+
+#loader.hide{
+  opacity:0;
+  pointer-events:none;
+}
+
+.loader-logo{
+  color:var(--gold);
+  font-size:36px;
+  font-family:'Cormorant Garamond',serif;
+}
+
+.loader-sub{
+  color:rgba(255,255,255,.6);
+  margin-top:8px;
+  letter-spacing:3px;
+  font-size:12px;
+}
+
+.loader-bar{
+  width:220px;
+  height:3px;
+  background:rgba(255,255,255,.1);
+  margin-top:30px;
+  border-radius:10px;
+  overflow:hidden;
+}
+
+.loader-progress{
+  height:100%;
+  width:0;
+  background:var(--gold);
+  transition:1.5s;
+}
+
+/* LOGIN */
+
+#pin-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+  backdrop-filter:blur(8px);
+}
+
+.pin-box{
+  width:340px;
+  max-width:92vw;
+  background:white;
+  border-radius:24px;
+  padding:30px;
+  text-align:center;
+}
+
+.pin-title{
+  font-size:30px;
+  font-family:'Cormorant Garamond',serif;
+  color:var(--forest);
+}
+
+.pin-sub{
+  color:var(--muted);
+  margin-top:8px;
+  margin-bottom:25px;
+  font-size:13px;
+}
+
+#pin-input{
+  width:100%;
+  padding:16px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  outline:none;
+  text-align:center;
+  font-size:24px;
+  letter-spacing:10px;
+}
+
+.login-btn{
+  width:100%;
+  margin-top:18px;
+  border:none;
+  background:var(--forest);
+  color:white;
+  padding:15px;
+  border-radius:14px;
+  cursor:pointer;
+  font-size:14px;
+}
+
+.login-btn:hover{
+  opacity:.9;
+}
+
+#login-error{
+  color:var(--red);
+  margin-top:14px;
+  font-size:13px;
+}
+
+.demo-pins{
+  margin-top:20px;
+  text-align:left;
+  background:var(--off);
+  padding:14px;
+  border-radius:12px;
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.8;
+}
+
+/* TOPBAR */
+
+.topbar{
+  height:64px;
+  background:var(--forest);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 20px;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+.topbar-logo{
+  color:var(--gold);
+  font-size:24px;
+  font-family:'Cormorant Garamond',serif;
+}
+
+.topbar-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.staff-badge{
+  background:rgba(255,255,255,.1);
+  color:white;
+  padding:7px 14px;
+  border-radius:20px;
+  font-size:12px;
+}
+
+.lock-btn{
+  border:none;
+  background:white;
+  color:var(--forest);
+  padding:9px 16px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+/* MAIN */
+
+.main{
+  max-width:1200px;
+  margin:auto;
+  padding:24px;
+}
+
+/* PROPERTY */
+
+.prop-row{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
+
+.prop-tabs{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.prop-tab{
+  border:none;
+  padding:10px 18px;
+  border-radius:40px;
+  cursor:pointer;
+  background:white;
+  border:1px solid var(--border);
+}
+
+.prop-tab.active{
+  background:var(--forest);
+  color:white;
+}
+
+.action-group{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.action-btn{
+  border:none;
+  padding:10px 16px;
+  border-radius:10px;
+  cursor:pointer;
+  background:white;
+  border:1px solid var(--border);
+}
+
+/* SETTINGS */
+
+.settings-panel{
+  display:none;
+  background:white;
+  border-radius:var(--radius);
+  padding:22px;
+  border:1px solid var(--border);
+  margin-bottom:20px;
+}
+
+.settings-panel.open{
+  display:block;
+}
+
+.settings-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.field-group{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.field-group label{
+  font-size:12px;
+  color:var(--muted);
+}
+
+.field-group input{
+  padding:12px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  outline:none;
+}
+
+.rooms-section-title{
+  margin:20px 0 10px;
+  font-weight:700;
+}
+
+.room-row{
+  display:grid;
+  grid-template-columns:1fr 90px 110px 45px;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.room-row input{
+  padding:10px;
+  border-radius:10px;
+  border:1px solid var(--border);
+}
+
+.del-room-btn{
+  border:none;
+  border-radius:10px;
+  background:var(--redbg);
+  color:var(--red);
+  cursor:pointer;
+}
+
+.add-room-btn,
+.save-btn{
+  margin-top:10px;
+  border:none;
+  padding:12px 16px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.add-room-btn{
+  background:white;
+  border:1px dashed var(--border);
+}
+
+.save-btn{
+  background:var(--forest);
+  color:white;
+}
+
+/* HEADER */
+
+.cal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:24px;
+  flex-wrap:wrap;
+  gap:20px;
+}
+
+.prop-name{
+  font-size:34px;
+  font-family:'Cormorant Garamond',serif;
+}
+
+.prop-meta{
+  color:var(--muted);
+  margin-top:4px;
+  font-size:13px;
+}
+
+.month-nav{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.nav-btn{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:none;
+  background:white;
+  cursor:pointer;
+}
+
+.month-label{
+  min-width:180px;
+  text-align:center;
+  font-size:24px;
+  font-family:'Cormorant Garamond',serif;
+}
+
+/* SUMMARY */
+
+.summary-row{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px;
+  margin-bottom:22px;
+}
+
+.sum-card{
+  background:white;
+  border-radius:var(--radius);
+  padding:20px;
+  border:1px solid var(--border);
+  text-align:center;
+}
+
+.sum-label{
+  font-size:11px;
+  color:var(--muted);
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+
+.sum-val{
+  font-size:30px;
+  font-family:'Cormorant Garamond',serif;
+}
+
+/* CALENDAR */
+
+.cal-card{
+  background:white;
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  padding:20px;
+}
+
+.weekdays{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  margin-bottom:8px;
+}
+
+.weekdays span{
+  text-align:center;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.cal-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+}
+
+.day{
+  min-height:105px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  padding:8px;
+  cursor:pointer;
+  transition:.2s;
+  display:flex;
+  flex-direction:column;
+}
+
+.day:hover{
+  transform:translateY(-2px);
+}
+
+.day.avail{
+  background:var(--light);
+}
+
+.day.warn{
+  background:var(--amberbg);
+}
+
+.day.full{
+  background:var(--redbg);
+}
+
+.day.today{
+  border:2px solid var(--gold);
+}
+
+.day-num{
+  font-size:12px;
+  text-align:right;
+  margin-bottom:8px;
+}
+
+.room-pill{
+  font-size:10px;
+  background:rgba(255,255,255,.7);
+  padding:4px 6px;
+  border-radius:6px;
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:4px;
+}
+
+.day-total{
+  margin-top:auto;
+  text-align:center;
+  font-size:12px;
+  font-weight:700;
+}
+
+/* MODAL */
+
+#day-modal-wrap{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+#day-modal-wrap.open{
+  display:flex;
+}
+
+.day-modal{
+  width:380px;
+  max-width:95vw;
+  background:white;
+  border-radius:22px;
+  padding:24px;
+}
+
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:20px;
+}
+
+.modal-date{
+  font-size:24px;
+  font-family:'Cormorant Garamond',serif;
+}
+
+.modal-close{
+  width:34px;
+  height:34px;
+  border:none;
+  border-radius:50%;
+  cursor:pointer;
+}
+
+.modal-room-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px;
+  border-radius:12px;
+  background:var(--off);
+  margin-bottom:10px;
+}
+
+.modal-counter{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.counter-btn{
+  width:30px;
+  height:30px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.modal-save-btn{
+  width:100%;
+  margin-top:14px;
+  border:none;
+  background:var(--forest);
+  color:white;
+  padding:14px;
+  border-radius:12px;
+  cursor:pointer;
+}
+
+/* TOAST */
+
+#toast{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:var(--forest);
+  color:white;
+  padding:14px 20px;
+  border-radius:12px;
+  transform:translateY(120px);
+  transition:.3s;
+  z-index:999999;
+}
+
+#toast.show{
+  transform:translateY(0);
+}
+
+/* MOBILE */
+
+@media(max-width:700px){
+
+  .settings-grid{
+    grid-template-columns:1fr;
+  }
+
+  .room-row{
+    grid-template-columns:1fr;
+  }
+
+  .day{
+    min-height:70px;
+  }
+
+  .room-pill{
+    display:none;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- LOADER -->
+
+<div id="loader">
+
+  <div class="loader-logo">
+    Resort Manager
+  </div>
+
+  <div class="loader-sub">
+    Hospitality PMS
+  </div>
+
+  <div class="loader-bar">
+    <div class="loader-progress" id="loader-bar"></div>
+  </div>
+
+</div>
+
+<!-- LOGIN -->
+
+<div id="pin-overlay">
+
+  <div class="pin-box">
+
+    <div class="pin-title">
+      Staff Login
+    </div>
+
+    <div class="pin-sub">
+      Enter your secure 4 digit PIN
+    </div>
+
+    <input
+      type="password"
+      maxlength="4"
+      id="pin-input"
+      placeholder="••••"
+    >
+
+    <button class="login-btn" onclick="loginStaff()">
+      Login
+    </button>
+
+    <div id="login-error"></div>
+
+    <div class="demo-pins">
+
+      <strong>Staff Access</strong><br>
+
+      Admin → 8427<br>
+      Reception → 5183<br>
+      Manager → 2649
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- TOPBAR -->
+
+<div class="topbar">
+
+  <div class="topbar-logo">
+    Resort Manager
+  </div>
+
+  <div class="topbar-right">
+
+    <div class="staff-badge" id="active-staff-name">
+      Not Logged In
+    </div>
+
+    <button class="lock-btn" onclick="lockApp()">
+      Logout
+    </button>
+
+  </div>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="main">
+
+  <div class="prop-row">
+
+    <div class="prop-tabs" id="prop-tabs"></div>
+
+    <div class="action-group">
+
+      <button class="action-btn" onclick="toggleSettings()">
+        ⚙ Settings
+      </button>
+
+      <button class="action-btn" onclick="addProperty()">
+        + Property
+      </button>
+
+      <button class="action-btn" onclick="exportData()">
+        Export
+      </button>
+
+      <label class="action-btn" style="cursor:pointer">
+        Import
+        <input type="file" hidden onchange="importData(event)">
+      </label>
+
+    </div>
+
+  </div>
+
+  <!-- SETTINGS -->
+
+  <div class="settings-panel" id="settings-panel">
+
+    <div class="settings-grid">
+
+      <div class="field-group">
+        <label>Property Name</label>
+        <input id="set-name">
+      </div>
+
+      <div class="field-group">
+        <label>Location</label>
+        <input id="set-location">
+      </div>
+
+      <div class="field-group">
+        <label>Contact</label>
+        <input id="set-contact">
+      </div>
+
+      <div class="field-group">
+        <label>Website</label>
+        <input id="set-website">
+      </div>
+
+    </div>
+
+    <div class="rooms-section-title">
+      Room Types
+    </div>
+
+    <div id="room-rows"></div>
+
+    <button class="add-room-btn" onclick="addRoomRow()">
+      + Add Room
+    </button>
+
+    <br>
+
+    <button class="save-btn" onclick="saveSettings()">
+      Save Settings
+    </button>
+
+  </div>
+
+  <!-- HEADER -->
+
+  <div class="cal-header">
+
+    <div>
+
+      <div class="prop-name" id="prop-display-name"></div>
+
+      <div class="prop-meta" id="prop-display-meta"></div>
+
+    </div>
+
+    <div class="month-nav">
+
+      <button class="nav-btn" onclick="changeMonth(-1)">
+        ←
+      </button>
+
+      <div class="month-label" id="month-label"></div>
+
+      <button class="nav-btn" onclick="changeMonth(1)">
+        →
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- SUMMARY -->
+
+  <div class="summary-row" id="summary-row"></div>
+
+  <!-- CALENDAR -->
+
+  <div class="cal-card">
+
+    <div class="weekdays">
+      <span>Sun</span>
+      <span>Mon</span>
+      <span>Tue</span>
+      <span>Wed</span>
+      <span>Thu</span>
+      <span>Fri</span>
+      <span>Sat</span>
+    </div>
+
+    <div class="cal-grid" id="cal-grid"></div>
+
+  </div>
+
+</div>
+
+<!-- MODAL -->
+
+<div id="day-modal-wrap">
+
+  <div class="day-modal">
+
+    <div class="modal-header">
+
+      <div class="modal-date" id="modal-date-label"></div>
+
+      <button class="modal-close" onclick="closeModal()">
+        ✕
+      </button>
+
+    </div>
+
+    <div id="modal-rooms"></div>
+
+    <button class="modal-save-btn" onclick="saveDay()">
+      Save Availability
+    </button>
+
+  </div>
+
+</div>
+
+<!-- TOAST -->
+
+<div id="toast"></div>
+
+<script>
+
+// STORAGE KEY
+
+const STORAGE_KEY = 'resort_manager_v3';
+
+// STAFF PINS
+
+const STAFF_PINS = [
+
+  {
+    name:'Admin',
+    pin:'8427'
+  },
+
+  {
+    name:'Reception',
+    pin:'5183'
+  },
+
+  {
+    name:'Manager',
+    pin:'2649'
+  }
+
+];
+
+// STATE
+
+let appData = null;
+let currentProp = 0;
+let currentDate = new Date();
+let editingDay = null;
+let modalTemp = {};
+let activeStaff = null;
+
+const MONTHS = [
+'January','February','March','April','May','June',
+'July','August','September','October','November','December'
+];
+
+// DEFAULT DATA
+
+function defaultData(){
+
+  return {
+
+    properties:[
+
+      {
+
+        name:'Kaattil Home',
+
+        location:'Varkala, Kerala',
+
+        contact:'+91 8943366369',
+
+        website:'www.kaattilhome.com',
+
+        rooms:[
+
+          {
+            name:'Deluxe Room',
+            total:4,
+            rate:3500
+          },
+
+          {
+            name:'Suite Room',
+            total:2,
+            rate:6000
+          },
+
+          {
+            name:'Family Room',
+            total:3,
+            rate:5000
+          }
+
+        ],
+
+        availability:{}
+
+      }
+
+    ]
+
+  };
+
+}
+
+// STORAGE
+
+function saveData(){
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(appData)
+  );
+
+}
+
+function loadData(){
+
+  const raw = localStorage.getItem(STORAGE_KEY);
+
+  if(raw){
+
+    appData = JSON.parse(raw);
+
+  }else{
+
+    appData = defaultData();
+
+  }
+
+}
+
+// LOGIN
+
+function loginStaff(){
+
+  const pin =
+    document.getElementById('pin-input').value;
+
+  const staff =
+    STAFF_PINS.find(s=>s.pin===pin);
+
+  if(!staff){
+
+    document.getElementById('login-error')
+      .textContent='Invalid PIN';
+
+    return;
+
+  }
+
+  activeStaff = staff;
+
+  document.getElementById('active-staff-name')
+    .textContent = staff.name;
+
+  document.getElementById('pin-overlay')
+    .style.display='none';
+
+  toast(`Welcome ${staff.name}`);
+
+}
+
+function lockApp(){
+
+  activeStaff = null;
+
+  document.getElementById('pin-overlay')
+    .style.display='flex';
+
+  document.getElementById('pin-input')
+    .value='';
+
+  document.getElementById('login-error')
+    .textContent='';
+
+  document.getElementById('active-staff-name')
+    .textContent='Not Logged In';
+
+}
+
+// TOAST
+
+function toast(msg){
+
+  const t=document.getElementById('toast');
+
+  t.textContent=msg;
+
+  t.className='show';
+
+  setTimeout(()=>{
+    t.className='';
+  },3000);
+
+}
+
+// PROPERTY TABS
+
+function renderTabs(){
+
+  const wrap =
+    document.getElementById('prop-tabs');
+
+  wrap.innerHTML='';
+
+  appData.properties.forEach((p,i)=>{
+
+    const btn=document.createElement('button');
+
+    btn.className=
+      'prop-tab'+(i===currentProp?' active':'');
+
+    btn.textContent=p.name;
+
+    btn.onclick=()=>{
+
+      currentProp=i;
+
+      renderTabs();
+
+      render();
+
+      loadSettings();
+
+    };
+
+    wrap.appendChild(btn);
+
+  });
+
+}
+
+// SETTINGS
+
+function toggleSettings(){
+
+  document.getElementById('settings-panel')
+    .classList.toggle('open');
+
+}
+
+function loadSettings(){
+
+  const prop=appData.properties[currentProp];
+
+  document.getElementById('set-name')
+    .value=prop.name;
+
+  document.getElementById('set-location')
+    .value=prop.location;
+
+  document.getElementById('set-contact')
+    .value=prop.contact;
+
+  document.getElementById('set-website')
+    .value=prop.website;
+
+  renderRoomRows(prop.rooms);
+
+}
+
+function renderRoomRows(rooms){
+
+  const wrap=document.getElementById('room-rows');
+
+  wrap.innerHTML='';
+
+  rooms.forEach((r,i)=>{
+
+    const row=document.createElement('div');
+
+    row.className='room-row';
+
+    row.innerHTML=`
+
+      <input id="rn${i}" value="${r.name}">
+
+      <input id="rt${i}" type="number" value="${r.total}">
+
+      <input id="rr${i}" type="number" value="${r.rate}">
+
+      <button class="del-room-btn"
+        onclick="delRoomRow(${i})">
+        ✕
+      </button>
+
+    `;
+
+    wrap.appendChild(row);
+
+  });
+
+}
+
+function addRoomRow(){
+
+  appData.properties[currentProp].rooms.push({
+
+    name:'New Room',
+    total:1,
+    rate:2000
+
+  });
+
+  renderRoomRows(
+    appData.properties[currentProp].rooms
+  );
+
+}
+
+function delRoomRow(i){
+
+  const prop=appData.properties[currentProp];
+
+  if(prop.rooms.length<=1){
+
+    toast('Minimum 1 room required');
+
+    return;
+
+  }
+
+  prop.rooms.splice(i,1);
+
+  renderRoomRows(prop.rooms);
+
+}
+
+function saveSettings(){
+
+  const prop=appData.properties[currentProp];
+
+  prop.name=document.getElementById('set-name').value;
+
+  prop.location=document.getElementById('set-location').value;
+
+  prop.contact=document.getElementById('set-contact').value;
+
+  prop.website=document.getElementById('set-website').value;
+
+  prop.rooms=[];
+
+  document.querySelectorAll('.room-row')
+    .forEach((r,i)=>{
+
+      prop.rooms.push({
+
+        name:document.getElementById('rn'+i).value,
+
+        total:parseInt(
+          document.getElementById('rt'+i).value
+        ),
+
+        rate:parseInt(
+          document.getElementById('rr'+i).value
+        )
+
+      });
+
+    });
+
+  saveData();
+
+  renderTabs();
+
+  render();
+
+  toast('Settings saved');
+
+}
+
+// PROPERTY
+
+function addProperty(){
+
+  appData.properties.push({
+
+    name:`Property ${appData.properties.length+1}`,
+
+    location:'',
+    contact:'',
+    website:'',
+
+    rooms:[
+      {
+        name:'Standard Room',
+        total:2,
+        rate:2000
+      }
+    ],
+
+    availability:{}
+
+  });
+
+  renderTabs();
+
+  saveData();
+
+}
+
+// EXPORT
+
+function exportData(){
+
+  const blob=new Blob(
+    [JSON.stringify(appData,null,2)],
+    {type:'application/json'}
+  );
+
+  const a=document.createElement('a');
+
+  a.href=URL.createObjectURL(blob);
+
+  a.download='resort-backup.json';
+
+  a.click();
+
+}
+
+// IMPORT
+
+function importData(event){
+
+  const file=event.target.files[0];
+
+  if(!file)return;
+
+  const reader=new FileReader();
+
+  reader.onload=e=>{
+
+    appData=JSON.parse(e.target.result);
+
+    saveData();
+
+    renderTabs();
+
+    render();
+
+    toast('Backup restored');
+
+  };
+
+  reader.readAsText(file);
+
+}
+
+// AVAILABILITY
+
+function avKey(y,m,d){
+
+  return `${y}-${m+1}-${d}`;
+
+}
+
+function getAvail(prop,y,m,d){
+
+  const k=avKey(y,m,d);
+
+  if(!prop.availability[k]){
+
+    const def={};
+
+    prop.rooms.forEach(r=>{
+
+      def[r.name]=r.total;
+
+    });
+
+    return def;
+
+  }
+
+  return prop.availability[k];
+
+}
+
+// ANALYTICS
+
+function calculateAnalytics(prop){
+
+  let revenue=0;
+  let occupied=0;
+  let inventory=0;
+
+  Object.keys(prop.availability).forEach(k=>{
+
+    const av=prop.availability[k];
+
+    prop.rooms.forEach(r=>{
+
+      const left=av[r.name]??r.total;
+
+      const booked=r.total-left;
+
+      occupied+=booked;
+
+      inventory+=r.total;
+
+      revenue+=booked*r.rate;
+
+    });
+
+  });
+
+  return {
+
+    occupancy:inventory
+      ?Math.round((occupied/inventory)*100)
+      :0,
+
+    revenue
+
+  };
+
+}
+
+// RENDER
+
+function render(){
+
+  const prop=appData.properties[currentProp];
+
+  document.getElementById('prop-display-name')
+    .textContent=prop.name;
+
+  document.getElementById('prop-display-meta')
+    .textContent=
+      `${prop.location} • ${prop.contact}`;
+
+  const y=currentDate.getFullYear();
+  const m=currentDate.getMonth();
+
+  document.getElementById('month-label')
+    .textContent=
+      `${MONTHS[m]} ${y}`;
+
+  const analytics=
+    calculateAnalytics(prop);
+
+  document.getElementById('summary-row')
+    .innerHTML=`
+
+      <div class="sum-card">
+        <div class="sum-label">Room Types</div>
+        <div class="sum-val">${prop.rooms.length}</div>
+      </div>
+
+      <div class="sum-card">
+        <div class="sum-label">Occupancy</div>
+        <div class="sum-val">${analytics.occupancy}%</div>
+      </div>
+
+      <div class="sum-card">
+        <div class="sum-label">Revenue</div>
+        <div class="sum-val">
+          ₹${analytics.revenue.toLocaleString()}
+        </div>
+      </div>
+
+    `;
+
+  const grid=
+    document.getElementById('cal-grid');
+
+  grid.innerHTML='';
+
+  const firstDay=
+    new Date(y,m,1).getDay();
+
+  const dim=
+    new Date(y,m+1,0).getDate();
+
+  for(let i=0;i<firstDay;i++){
+
+    grid.appendChild(
+      document.createElement('div')
+    );
+
+  }
+
+  for(let d=1;d<=dim;d++){
+
+    const av=getAvail(prop,y,m,d);
+
+    let total=0;
+    let max=0;
+
+    prop.rooms.forEach(r=>{
+
+      total+=av[r.name]??r.total;
+
+      max+=r.total;
+
+    });
+
+    let state='avail';
+
+    if(total===0) state='full';
+    else if(total<=2) state='warn';
+
+    const cell=document.createElement('div');
+
+    cell.className=`day ${state}`;
+
+    cell.onclick=()=>openModal(y,m,d);
+
+    let pills='';
+
+    prop.rooms.forEach(r=>{
+
+      pills+=`
+
+        <div class="room-pill">
+
+          <span>${r.name}</span>
+
+          <span>${av[r.name]}</span>
+
+        </div>
+
+      `;
+
+    });
+
+    cell.innerHTML=`
+
+      <div class="day-num">${d}</div>
+
+      ${pills}
+
+      <div class="day-total">
+        ${total}/${max}
+      </div>
+
+    `;
+
+    grid.appendChild(cell);
+
+  }
+
+}
+
+// MONTH
+
+function changeMonth(d){
+
+  currentDate.setMonth(
+    currentDate.getMonth()+d
+  );
+
+  render();
+
+}
+
+// MODAL
+
+function openModal(y,m,d){
+
+  editingDay={y,m,d};
+
+  const prop=appData.properties[currentProp];
+
+  modalTemp={...getAvail(prop,y,m,d)};
+
+  document.getElementById('modal-date-label')
+    .textContent=
+      `${d} ${MONTHS[m]} ${y}`;
+
+  const wrap=
+    document.getElementById('modal-rooms');
+
+  wrap.innerHTML='';
+
+  prop.rooms.forEach(r=>{
+
+    const row=document.createElement('div');
+
+    row.className='modal-room-row';
+
+    row.innerHTML=`
+
+      <div>
+        <strong>${r.name}</strong>
+      </div>
+
+      <div class="modal-counter">
+
+        <button class="counter-btn"
+          onclick="adjRoom('${r.name}',-1)">
+          -
+        </button>
+
+        <div id="cv-${r.name}">
+          ${modalTemp[r.name]}
+        </div>
+
+        <button class="counter-btn"
+          onclick="adjRoom('${r.name}',1)">
+          +
+        </button>
+
+      </div>
+
+    `;
+
+    wrap.appendChild(row);
+
+  });
+
+  document.getElementById('day-modal-wrap')
+    .classList.add('open');
+
+}
+
+function adjRoom(name,d){
+
+  const prop=appData.properties[currentProp];
+
+  const room=
+    prop.rooms.find(r=>r.name===name);
+
+  modalTemp[name]=Math.max(
+    0,
+    Math.min(
+      room.total,
+      modalTemp[name]+d
+    )
+  );
+
+  document.getElementById(`cv-${name}`)
+    .textContent=modalTemp[name];
+
+}
+
+function closeModal(){
+
+  document.getElementById('day-modal-wrap')
+    .classList.remove('open');
+
+}
+
+function saveDay(){
+
+  const prop=appData.properties[currentProp];
+
+  const k=avKey(
+    editingDay.y,
+    editingDay.m,
+    editingDay.d
+  );
+
+  prop.availability[k]={...modalTemp};
+
+  saveData();
+
+  closeModal();
+
+  render();
+
+  toast('Availability updated');
+
+}
+
+// INIT
+
+async function init(){
+
+  const bar=
+    document.getElementById('loader-bar');
+
+  bar.style.width='40%';
+
+  loadData();
+
+  bar.style.width='100%';
+
+  setTimeout(()=>{
+
+    document.getElementById('loader')
+      .classList.add('hide');
+
+    renderTabs();
+
+    render();
+
+    loadSettings();
+
+  },700);
+
+}
+
+init();
+
+</script>
+
+</body>
+</html>
